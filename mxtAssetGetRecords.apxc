@@ -1,0 +1,111 @@
+public with sharing class mxtAssetGetRecords {
+    @AuraEnabled(cacheable = true)
+    public static List<SObject> getRecords(String query){
+
+
+        return Database.query(query);
+    }
+
+
+    @AuraEnabled(cacheable = true)
+    public static List<String> generateCSV(String query, String emailId){
+
+
+        System.debug('======query receieved'+emailId);
+
+
+               
+                String subject = 'Account Records CSV';
+                String body = 'Account Records CSV';
+       
+            // Creating the CSV file
+            //String finalstr = 'Id, Name, Amount \n';
+        String attName = 'Account Records.csv';
+        String generatedCSVFile ='';
+        String word='';
+       // String fieldName = '';
+        String tempQuery = query.replaceAll(' ','');
+        String selectAndFieldNames ='';
+        for(String t : query.split('')){
+            if(t!=' '){
+                word = word+t;
+            }else{
+                if(word.toLowerCase() == 'from'){
+                    break;
+                }
+                else{
+                    selectAndFieldNames = selectAndFieldNames+word;
+                }
+                word ='';
+            }
+        }
+        /*
+        List<string> fields =  selectAndFieldNames.substring(6).split(',');
+        integer numOfFields = fields.size();
+
+
+        String csvContentString =String.join(fields,',')+'\n';
+
+
+        integer i =1;
+        // get all the closed won opportunities
+        for(Sobject c: Database.query(query)){
+            String fileRow = '';
+            fileRow = fileRow + ','+
+         
+            fileRow = fileRow.replaceAll(',','');
+            csvContentString = csvContentString + fileRow + '\n';
+        }
+
+
+*/
+       
+                    List<Map<String, Object>> csvValues = new List<Map<String, Object>>();
+            Set<String> fieldNames = new Set<String>();
+            for(sObject record: Database.query(query)) {
+              Map<String, Object> fieldValues = record.getPopulatedFieldsAsMap();
+              csvValues.add(fieldValues);
+              fieldNames.addAll(fieldValues.keySet());
+            }
+            String[] allData = new String[0];
+            // Build header
+            String[] tempRow = new String[0];
+            for(String temp: fieldNames) {
+              tempRow.add(temp.escapeCSV());
+            }
+            allData.add(String.join(tempRow,','));
+            for(Map<String, Object> valuesFromRecord: csvValues) {
+              tempRow.clear();
+              for(String fieldName: fieldNames) {
+                Object value = valuesFromRecord.get(fieldName);
+                if(value == null) {
+                  value = '';
+                }
+                tempRow.add((''+value).escapeCSV());
+              }
+              allData.add(String.join(tempRow,','));
+            }
+            String finalCsv = String.join(allData,'\n');
+        // Define the email
+        Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+        // Create the email attachment    
+        Messaging.EmailFileAttachment efa = new Messaging.EmailFileAttachment();
+        efa.setFileName(attName);
+        efa.setBody(Blob.valueOf(finalCsv));
+        // Set the paramaters to the email object
+        email.setSubject( subject );
+       
+        // Here I am accessing current user email id to whom we are sending email
+        email.setToAddresses( new String[] {emailId} );
+        email.setPlainTextBody( body );
+       
+        // Attach file using setFileAttachments function
+        email.setFileAttachments(new Messaging.EmailFileAttachment[] {efa});
+        // Sends the email
+        Messaging.SendEmailResult [] r =
+        Messaging.sendEmail(new Messaging.SingleEmailMessage[] {email});  
+
+
+        return selectAndFieldNames.substring(6).split(',');
+            }
+        }
