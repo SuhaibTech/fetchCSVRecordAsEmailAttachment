@@ -1,0 +1,25 @@
+<template>
+    <div>
+        <lightning-card icon-name = 'utility:csv' title = 'Get CSV File '>
+            <div class = 'slds-m-left_medium'>
+                <div class="slds-p-around_medium lgc-bg">
+                    <lightning-button label="Get Records" slot="actions" onclick ={handleGetRecords}></lightning-button>
+                    <lightning-input type="text" label="Enter your query" onchange ={fetchQuery}></lightning-input>
+                    <lightning-input type="text" placeholder = "Enter Email Id" label="Share you CSV" onchange ={fetchEmailId}></lightning-input>
+                    <p if:true={hasError} style="color:red;">Some error occured :- {error}</p>
+
+
+                </div>
+                <lightning-button label="Download CSV" onclick ={handleDownloadCsv}></lightning-button>
+            </div>
+    </lightning-card>
+        <lightning-card title="SObject Records">
+          <lightning-datatable
+            key-field="Id"
+            data={records}
+            columns={columns}>
+          </lightning-datatable>
+        </lightning-card>
+     
+</div>
+</template>
